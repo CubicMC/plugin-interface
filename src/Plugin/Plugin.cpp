@@ -4,12 +4,7 @@
 
 #include "Plugin.hpp"
 
-Plugin::Plugin()
+void Plugin::setPluginInterface(std::shared_ptr<PluginInterface> interface)
 {
-
-}
-
-Plugin::~Plugin()
-{
-    
+    this->pluginInterface = interface;
 }
