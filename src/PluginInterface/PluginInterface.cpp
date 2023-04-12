@@ -2,8 +2,10 @@
 
 PluginInterface::PluginInterface()
 {
+
 }
 
 PluginInterface::~PluginInterface()
 {
+
 }
