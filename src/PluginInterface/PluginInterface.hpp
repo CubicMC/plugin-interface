@@ -1,37 +1,48 @@
 #ifndef PLUGIN_INTERFACE_HPP
 #define PLUGIN_INTERFACE_HPP
 
+class Server;
+
 class Player;
 class Entity;
 class Block;
 class Inventory;
 class Chat;
 
+class Vector3;
+
+struct u128;
+
 class PluginInterface {
     public:
         PluginInterface();
         virtual ~PluginInterface();
 
+        void load(Server *server);
+
+    private:
+        Server *server;
+
     struct player {
         explicit player(PluginInterface *interface) : _intern(interface) {};
 
-        // Checks
-        bool isConnected() const;
-        bool isBanned() const;
-        bool hasAdvancement() const;
-        bool hasRecipe() const;
+        Player *getByID(u128 uuid);
+        Player *getByName(std::string name);
 
-        Player *getByID();
-        Player *getByName();
+        // Checks
+        bool isConnected(Player *player) const;
+        bool isBanned(Player *player) const;
+        bool hasAdvancement(Player *player) const;
+        bool hasRecipe(Player *player) const;
 
         // Interaction
-        void playSound();
-        void kick();
-        void ban();
-        void giveAdvancement();
-        void revokeAdvancement();
-        void giveRecipe();
-        void removeRecipe();
+        void playSound(Player *player);
+        void kick(Player *player);
+        void ban(Player *player);
+        void giveAdvancement(Player *player);
+        void revokeAdvancement(Player *player);
+        void giveRecipe(Player *player);
+        void removeRecipe(Player *player);
 
         private:
         PluginInterface *_intern;
@@ -43,15 +54,14 @@ class PluginInterface {
         Entity *getByID();
 
         // Interactions
-        void kill();
-        void despawn();
-        void heal();
-        void damage();
-        void teleport();
-        void ride();
-        void unride();
-        void equip();
-        void unequip();
+        void kill(Entity *entity);
+        void despawn(Entity *entity);
+        void heal(Entity *entity, float amount);
+        void damage(Entity *entity, float amount);
+        void ride(Entity *entity);
+        void unride(Entity *entity);
+        void equip(Entity *entity);
+        void unequip(Entity *entity);
 
         private:
         PluginInterface *_intern;
@@ -74,11 +84,11 @@ class PluginInterface {
     struct inventory {
         explicit inventory(PluginInterface *interface) : _intern(interface) {};
 
-        // Checks
-        bool hasItem() const;
-
         Inventory *getByID()
         Inventory *getByPosition();
+
+        // Checks
+        bool hasItem() const;
 
         // Interactions
         void addItem();
