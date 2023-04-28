@@ -1,6 +1,8 @@
 #ifndef PLUGIN_INTERFACE_HPP
 #define PLUGIN_INTERFACE_HPP
 
+#include <string>
+
 class Server;
 
 class Player;
@@ -84,7 +86,7 @@ class PluginInterface {
     struct inventory {
         explicit inventory(PluginInterface *interface) : _intern(interface) {};
 
-        Inventory *getByID()
+        Inventory *getByID();
         Inventory *getByPosition();
 
         // Checks
