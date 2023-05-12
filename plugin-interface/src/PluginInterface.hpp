@@ -1,19 +1,22 @@
 #ifndef PLUGIN_INTERFACE_HPP
 #define PLUGIN_INTERFACE_HPP
 
+#include <vector>
 #include <string>
+
+#include "types.hpp"
 
 class Server;
 
 class Player;
 class Entity;
+class LivingEntity;
 class Block;
 class Inventory;
 class Chat;
 
+template<typename T>
 class Vector3;
-
-struct u128;
 
 class PluginInterface {
     public:
@@ -21,8 +24,6 @@ class PluginInterface {
         virtual ~PluginInterface();
 
         void load(Server *server);
-
-    private:
         Server *server;
 
     struct player {
