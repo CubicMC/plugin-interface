@@ -11,4 +11,6 @@ include_directories(${CMAKE_SOURCE_DIR}/../plugin)
 include_directories(${CMAKE_SOURCE_DIR}/../cubic-server)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-add_library(${CMAKE_PROJECT_NAME} SHARED ${CMAKE_SOURCE_DIR}/src/BattleRoyal.cpp)
+add_library(${CMAKE_PROJECT_NAME} SHARED
+        ${CMAKE_SOURCE_DIR}/src/BattleRoyal.cpp
+        ${CMAKE_SOURCE_DIR}/src/BattleRoyal.hpp)
