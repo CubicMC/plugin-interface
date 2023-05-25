@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <string>
 #include <vector>
+#include <atomic>
 
 #include "configuration/ConfigHandler.hpp"
 #include "whitelist/Whitelist.hpp"
@@ -39,31 +40,27 @@ public:
 
     void reload();
 
-    const Configuration::ConfigHandler &getConfig() const { return _config; }
+    const Configuration::ConfigHandler &getConfig() const;
 
-    const WhitelistHandling::Whitelist &getWhitelist() const { return _whitelist; }
+    const WhitelistHandling::Whitelist &getWhitelist() const;
 
-    const bool isWhitelistEnabled() const { return _whitelistEnabled; }
+    const bool isWhitelistEnabled() const;
 
-    const bool getEnforceWhitelist() const { return _enforceWhitelist; }
+    const bool getEnforceWhitelist() const;
 
-    static Server *getInstance()
-    {
-        static Server srv;
-        return &srv;
-    }
+    static Server *getInstance();
 
-    const std::vector<std::shared_ptr<Client>> &getClients() const { return _clients; }
+    const std::vector<std::shared_ptr<Client>> &getClients() const;
 
-    const WorldGroup *getWorldGroup(const std::string_view &name) const { return this->_worldGroups.at(name); }
+    const WorldGroup *getWorldGroup(const std::string_view &name) const;
 
-    const std::vector<CommandBase *> &getCommands() const { return _commands; }
+    const std::vector<CommandBase *> &getCommands() const;
 
-    bool isRunning() const { return _running; }
+    bool isRunning() const;
 
-    const Blocks::GlobalPalette &getGlobalPalette() const { return _globalPalette; }
+    const Blocks::GlobalPalette &getGlobalPalette() const;
 
-    const Items::ItemConverter &getItemConverter() const { return _itemConverter; }
+    const Items::ItemConverter &getItemConverter() const;
 
     void forEachWorldGroup(std::function<void(WorldGroup &)> callback);
     void forEachWorldGroupIf(std::function<void(WorldGroup &)> callback, std::function<bool(const WorldGroup &)> predicate);
@@ -97,20 +94,7 @@ private:
     Configuration::ConfigHandler _config;
     WhitelistHandling::Whitelist _whitelist;
     std::unordered_map<std::string_view, WorldGroup *> _worldGroups;
-    // clang-format off
-    std::vector<CommandBase *> _commands = {
-        new command_parser::Help,
-        new command_parser::QuestionMark,
-        new command_parser::Stop,
-        new command_parser::Seed,
-        new command_parser::DumpChunk,
-        new command_parser::Log,
-        new command_parser::Op,
-        new command_parser::Deop,
-        new command_parser::Reload,
-        new command_parser::Time,
-    };
-    // clang-format on
+    std::vector<CommandBase *> _commands;
     Blocks::GlobalPalette _globalPalette;
     Items::ItemConverter _itemConverter;
 };
