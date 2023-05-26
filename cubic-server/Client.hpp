@@ -62,9 +62,9 @@ public:
 
     [[nodiscard]] bool isDisconnected() const;
 
-    [[nodiscard]] protocol::ClientStatus getStatus() const { return _status; }
+    [[nodiscard]] protocol::ClientStatus getStatus() const;
 
-    void setStatus(protocol::ClientStatus status) { _status = status; }
+    void setStatus(protocol::ClientStatus status);
 
     void switchToPlayState(u128 playerUuid, const std::string &username);
 

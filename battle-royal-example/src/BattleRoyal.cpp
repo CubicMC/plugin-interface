@@ -13,22 +13,31 @@ void initialize(PluginInterface *interface)
     std::cout << interface->server->isRunning() << std::endl;
 }
 
-void onPlayerJoin(PluginInterface *interface, Player *player)
+void destroy(PluginInterface *interface)
+{
+    std::cout << "BattleRoyale - destroyed" << std::endl;
+}
+
+bool onPlayerJoin(PluginInterface *interface, Player *player)
 {
     std::cout << "BattleRoyale - Player joined : " << std::endl;
+    return (true);
 }
 
-void onPlayerLeave(PluginInterface *interface, Player *player)
+bool onPlayerLeave(PluginInterface *interface, Player *player)
 {
     std::cout << "BattleRoyale - Player leaved : " << std::endl;
+    return (true);
 }
 
-void onBlockPlace(PluginInterface *interface, Block *block, Vector3<int> *position)
+bool onBlockPlace(PluginInterface *interface, Block *block, Vector3<int> *position)
 {
     std::cout << "BattleRoyale - Block placed : " << *position << std::endl;
+    return (true);
 }
 
-void onBlockDestroy(PluginInterface *interface, Block *block, Vector3<int> *position)
+bool onBlockDestroy(PluginInterface *interface, Block *block, Vector3<int> *position)
 {
     std::cout << "BattleRoyale - Block destroyed : " << *position << std::endl;
+    return (true);
 }
