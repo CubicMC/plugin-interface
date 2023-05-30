@@ -14,4 +14,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 add_library(${CMAKE_PROJECT_NAME} SHARED
         ${CMAKE_SOURCE_DIR}/src/Events.cpp
         ${CMAKE_SOURCE_DIR}/src/BattleRoyal.cpp
-        ${CMAKE_SOURCE_DIR}/src/BattleRoyal.hpp)
+        ${CMAKE_SOURCE_DIR}/src/BattleRoyal.hpp
+        ${CMAKE_SOURCE_DIR}/src/Commands.cpp
+        ${CMAKE_SOURCE_DIR}/src/Commands.hpp)

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 #include "BattleRoyal.hpp"
 #include "PluginInterface.hpp"
@@ -7,8 +8,13 @@
 #include "Server.hpp"
 #include "Player.hpp"
 
+#include "Commands.hpp"
+
 void initialize(PluginInterface *interface)
 {
+    Server::getInstance()->addCommand(std::make_unique<command_parser::Ready>());
+    Server::getInstance()->addCommand(std::make_unique<command_parser::NotReady>());
+    Server::getInstance()->addCommand(std::make_unique<command_parser::Interrupt>());
     std::cout << "par nous meme hein" << std::endl;
     std::cout << interface->server->isRunning() << std::endl;
 }

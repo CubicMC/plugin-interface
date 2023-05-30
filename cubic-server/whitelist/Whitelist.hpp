@@ -22,7 +22,7 @@ public:
     void removePlayer(u128 uuid, std::string playerName);
     std::pair<bool, int> isPlayerWhitelisted(u128 uuid, std::string playerName) const;
 
-    const std::string &getFilename() const;
+    const std::string &getFilename() const { return _filename; }
 
 protected:
     void _parseWhitelist(const std::string &path);

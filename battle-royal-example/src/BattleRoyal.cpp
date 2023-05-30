@@ -4,7 +4,7 @@
 #include "BattleRoyal.hpp"
 #include "PluginInterface.hpp"
 #include "Plugin.hpp"
-#include "logging/Logger.hpp"
+#include "logging/logging.hpp"
 
 BattleRoyale &BattleRoyale::getInstance()
 {
@@ -155,25 +155,25 @@ void BattleRoyale::setReady(const std::string &name, bool ready)
 
 void BattleRoyale::update()
 {
-        switch (this->_status)
-        {
-        case BattleRoyale::Waiting: // waiting for players to be ready
-            this->begin();
-            break;
-        case BattleRoyale::Beginning: // starting unless a player is not ready anymore
-            this->start();
-            break;
-        case BattleRoyale::Running: // running, waiting for the last player
-            this->finish();
-            break;
-        case BattleRoyale::Finished: // last player standing, anouncing victory
-            this->close();
-            break;
-        case BattleRoyale::Closed: // closed, restart the server
-            // TODO: restart the server
-            break;
-        case BattleRoyale::Interrupted: // game interrupted, stop the server
-            // TODO: stop the server
-            break;
-        }
+    switch (this->_status)
+    {
+    case BattleRoyale::Waiting: // waiting for players to be ready
+        this->begin();
+        break;
+    case BattleRoyale::Beginning: // starting unless a player is not ready anymore
+        this->start();
+        break;
+    case BattleRoyale::Running: // running, waiting for the last player
+        this->finish();
+        break;
+    case BattleRoyale::Finished: // last player standing, anouncing victory
+        this->close();
+        break;
+    case BattleRoyale::Closed: // closed, restart the server
+        // TODO: restart the server
+        break;
+    case BattleRoyale::Interrupted: // game interrupted, stop the server
+        // TODO: stop the server
+        break;
+    }
 }
