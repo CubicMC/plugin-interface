@@ -30,13 +30,13 @@ bool onPlayerLeave(PluginInterface *interface, Player *player)
     return (true);
 }
 
-bool onBlockPlace(PluginInterface *interface, Block *block, Vector3<int> *position)
+bool onBlockPlace(PluginInterface *interface, uint32_t block_id, Vector3<int> *position)
 {
     std::cout << "BattleRoyale - Block placed : " << *position << std::endl;
     return (true);
 }
 
-bool onBlockDestroy(PluginInterface *interface, Block *block, Vector3<int> *position)
+bool onBlockDestroy(PluginInterface *interface, uint32_t block_id, Vector3<int> *position)
 {
     std::cout << "BattleRoyale - Block destroyed : " << *position << std::endl;
     return (true);
