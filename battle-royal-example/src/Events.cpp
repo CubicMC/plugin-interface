@@ -30,13 +30,13 @@ bool destroy(PluginInterface *interface)
 
 bool onPlayerJoin(PluginInterface *interface, Player *player)
 {
-    BattleRoyale::getInstance().join(player->getUsername());
+    BattleRoyale::getInstance().join(*player);
     return (false);
 }
 
 bool onPlayerLeave(PluginInterface *interface, Player *player)
 {
-    BattleRoyale::getInstance().playerLeft(player->getUsername());
+    BattleRoyale::getInstance().playerLeft(*player);
     return (true);
 }
 

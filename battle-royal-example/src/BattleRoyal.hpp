@@ -7,6 +7,8 @@
 #include <string>
 #include <ctime>
 
+class Player;
+
 static const char identifier[] = "battleroyale";
 static const char version[] = "1.0.0";
 static const char name[] = "Battle Royale";
@@ -22,6 +24,16 @@ public:
         Interrupted = -1
     };
 
+    struct Challenger {
+        Challenger(Player &player);
+        ~Challenger() = default;
+
+        Player &player;
+        bool ready;
+
+        Challenger &operator=(const Challenger &other);
+    };
+
 public:
     BattleRoyale() = default;
     ~BattleRoyale() = default;
@@ -31,11 +43,11 @@ public:
     bool isPlaying(const std::string &name) const noexcept;
     bool isSpectating(const std::string &name) const noexcept;
 
-    void join(const std::string &name);
-    void spectate(const std::string &name);
+    void join(Player &player);
+    void spectate(Player &player);
 
-    void playerLeft(const std::string &player);
-    void playerDied(const std::string &player);
+    void playerLeft(Player &player);
+    void playerDied(Player &player);
 
     void begin();
     void start();
@@ -46,12 +58,12 @@ public:
 
     Status getStatus() const noexcept;
 
-    void setReady(const std::string &name, bool ready);
+    void setReady(Player &player, bool ready);
 
     void update();
 
 private:
-    std::unordered_set<std::string> _players;
+    std::unordered_map<std::string, std::unique_ptr<Challenger>> _players;
     std::unordered_set<std::string> _readyPlayers;
     Status _status;
     std::time_t _timestamp;

@@ -19,7 +19,7 @@ void command_parser::Ready::autocomplete(UNUSED std::vector<std::string> &args, 
 void command_parser::Ready::execute(UNUSED std::vector<std::string> &args, Player *invoker) const
 {
     if (invoker) {
-        BattleRoyale::getInstance().setReady(invoker->getUsername(), true);
+        BattleRoyale::getInstance().setReady(*invoker, true);
         invoker->getDimension()->getWorld()->getChat()->sendSystemMessage(invoker->getUsername() + " is ready !", *invoker->getWorldGroup());
     }
 }
@@ -43,7 +43,7 @@ void command_parser::NotReady::autocomplete(UNUSED std::vector<std::string> &arg
 void command_parser::NotReady::execute(UNUSED std::vector<std::string> &args, Player *invoker) const
 {
     if (invoker) {
-        BattleRoyale::getInstance().setReady(invoker->getUsername(), false);
+        BattleRoyale::getInstance().setReady(*invoker, false);
         invoker->getDimension()->getWorld()->getChat()->sendSystemMessage(invoker->getUsername() + " is not ready...", *invoker->getWorldGroup());
     }
 }

@@ -1,9 +1,12 @@
 //
-// Created by toma- on 03/04/2023.
+// Created by TOMA- on 03/04/2023.
 //
 
 #ifndef PLUGIN_HPP
 #define PLUGIN_HPP
+
+#include <cstdint>
+#include <string>
 
 class PluginInterface;
 
