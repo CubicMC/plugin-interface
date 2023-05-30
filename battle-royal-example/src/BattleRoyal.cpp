@@ -6,144 +6,146 @@
 #include "Plugin.hpp"
 #include "logging/Logger.hpp"
 
-BattleRoyale::Game::Game(const std::string &name, size_t maxPlayers):
-    _identifier(identifier),
-    _status(BattleRoyale::Game::Waiting),
-    _maxPlayers(maxPlayers),
-    _timestamp(std::time(nullptr))
+BattleRoyale &BattleRoyale::getInstance()
 {
-    LINFO("Battle Royale", this->_identifier, " created");
+    static BattleRoyale instance;
+
+    return instance;
 }
 
-BattleRoyale::Game::~Game()
+bool BattleRoyale::isPlaying(const std::string &name) const noexcept
 {
-    LINFO("Battle Royale", this->_identifier, " destroyed");
+    return (this->_players.contains(name));
 }
 
-const std::string &BattleRoyale::Game::getIdentifier()
+bool BattleRoyale::isSpectating(const std::string &name) const noexcept
 {
-    return (this->_identifier);
+    return (!this->isPlaying(name));
 }
 
-void BattleRoyale::Game::begin(void)
+void BattleRoyale::join(const std::string &name)
+{
+    if (this->_status == BattleRoyale::Waiting || this->_status == BattleRoyale::Beginning) {
+        this->_players.insert(name);
+        // TODO: set gamemode to survival
+    } else
+        this->spectate(name);
+}
+
+void BattleRoyale::spectate(const std::string &name)
+{
+    // TODO: set gamemode to spectator
+}
+
+void BattleRoyale::playerLeft(const std::string &player)
+{
+    switch (this->_status)
+    {
+    case BattleRoyale::Waiting: // remove player from everything
+        if (this->_players.contains(player))
+            this->_players.erase(player);
+        if (this->_readyPlayers.contains(player))
+            this->_readyPlayers.erase(player);
+        break;
+    case BattleRoyale::Beginning: // remove player from everything and reset timer
+        if (this->_players.contains(player))
+            this->_players.erase(player);
+        this->_timestamp = std::time(nullptr);
+        break;
+    case BattleRoyale::Running: // counts as a forfeit
+        if (this->_players.contains(player)) {
+            this->_players.erase(player);
+            // TODO: notify player (forfeit)
+        }
+        break;
+    }
+    // leaving in the Finished, Closed or Interrupted (unlikely) phase does not have any impact
+}
+
+void BattleRoyale::playerDied(const std::string &player)
+{
+    switch (this->_status)
+    {
+    case BattleRoyale::Waiting: // HOW ? kick him, that'll teach him
+        // TODO: kick player
+        break;
+    case BattleRoyale::Beginning: // HOW ? kick him, that'll teach him
+        // TODO: kick player
+        break;
+    case BattleRoyale::Running: // if running, counts as a forfeit
+        if (this->_players.contains(player)) {
+            this->_players.erase(player);
+            // TODO: notify player (forfeit)
+        }
+        break;
+    }
+    // dying in the Finished, Closed or Interrupted phase should not be possible and does not have any impact
+}
+
+void BattleRoyale::begin()
 {
     // if more than 1 player and all players are ready, go to the beginning phase
     if (this->_players.size() > 1 && this->_players.size() > this->_readyPlayers.size())
         return;
-    this->_status = BattleRoyale::Game::Beginning;
+    this->_status = BattleRoyale::Beginning;
     this->_timestamp = std::time(nullptr);
-
 }
 
-void BattleRoyale::Game::start(void)
+void BattleRoyale::start()
 {
     // if a player joins or a ready player cancels, go back to the waiting phase
     if (this->_players.size() < 2 || this->_players.size() > this->_readyPlayers.size()) {
-        this->_status = BattleRoyale::Game::Waiting;
+        this->_status = BattleRoyale::Waiting;
         return;
     }
     // if all players are ready and no player quit/join in for 5 seconds, go to the running phase
     if (std::time(nullptr) >= this->_timestamp + 5) {
-        this->_status = BattleRoyale::Game::Running;
+        this->_status = BattleRoyale::Running;
         this->_timestamp = std::time(nullptr);
         // TODO: update gamemode, clear inventory and teleport players and spectators
         return;
     }
 }
 
-void BattleRoyale::Game::finish(void)
+void BattleRoyale::finish()
 {
     // one player remaining, go to the finishing phase
     if (this->_players.size() == 1) {
         // TODO: notify players
-        this->_status = BattleRoyale::Game::Finished;
+        this->_status = BattleRoyale::Finished;
+        this->_timestamp = std::time(nullptr);
+        return;
+    }
+    // no player remaining (very rare), no winner, go to the finishing phase
+    if (this->_players.size() == 0) {
+        // TODO: notify players
+        this->_status = BattleRoyale::Finished;
         this->_timestamp = std::time(nullptr);
         return;
     }
 }
 
-void BattleRoyale::Game::close(void)
+void BattleRoyale::close()
 {
     // 8 seconds after the game is over, kick players and destroy the game
     if (std::time(nullptr) > this->_timestamp + 8) {
         // TODO: kick players
-        this->_status = BattleRoyale::Game::Closed;
+        this->_status = BattleRoyale::Closed;
         return;
     }
 }
 
-void BattleRoyale::Game::interrupt(void)
+void BattleRoyale::interrupt() noexcept
 {
-    this->_status = BattleRoyale::Game::Interrupted;
+    this->_status = BattleRoyale::Interrupted;
 }
 
-void BattleRoyale::Game::addPlayer(const std::string &player)
-{
-    // if game already running or too much players, join as a spectator
-    if ((this->_status != BattleRoyale::Game::Waiting && this->_status != BattleRoyale::Game::Beginning) || \
-        this->_players.size() >= this->_maxPlayers) {
-        this->addSpectator(player);
-        return;
-    }
-    // TODO: update gamemode
-    this->_timestamp = std::time(nullptr);
-    this->_players.insert(player);
-    LDEBUG(player, " joined ", this->_identifier);
-}
-
-void BattleRoyale::Game::addSpectator(const std::string &spectator)
-{
-    // TODO: update gamemode
-    this->_spectators.insert(spectator);
-    LDEBUG(spectator, " spectates ", this->_identifier);
-}
-
-void BattleRoyale::Game::playerLeave(const std::string &player)
-{
-    // never heard of that player, do nothing
-    if (!this->_players.contains(player) && !this->_spectators.contains(player))
-        return;
-    // reset timer when game is beginning
-    if (this->_status == BattleRoyale::Game::Beginning)
-        this->_timestamp = std::time(nullptr);
-    // remove player from game
-    if (this->_readyPlayers.contains(player))
-        this->_readyPlayers.erase(player);
-    if (this->_players.contains(player))
-        this->_players.erase(player);
-    if (this->_spectators.contains(player))
-        this->_spectators.erase(player);
-    LDEBUG(player, " left ", this->_identifier);
-}
-
-void BattleRoyale::Game::playerDied(const std::string &player)
-{
-    // TODO: notify players, change player gamemode, respawn player
-    this->_players.erase(player);
-    this->_spectators.insert(player);
-}
-
-const BattleRoyale::Game::Status &BattleRoyale::Game::getStatus(void) const noexcept
+BattleRoyale::Status BattleRoyale::getStatus() const noexcept
 {
     return (this->_status);
 }
 
-size_t BattleRoyale::Game::getMaxPlayerNumber(void) const noexcept
-{
-    return (this->_maxPlayers);
-}
-
-size_t BattleRoyale::Game::getPlayerNumber(void) const noexcept
-{
-    return (this->_players.size());
-}
-
-void BattleRoyale::Game::setMaxPlayerNumber(size_t nbr) noexcept
-{
-    this->_maxPlayers = nbr;
-}
-
-void BattleRoyale::Game::setReady(const std::string &name, bool ready)
+void BattleRoyale::setReady(const std::string &name, bool ready)
 {
     if (ready == true)
         this->_readyPlayers.insert(name);
@@ -151,127 +153,27 @@ void BattleRoyale::Game::setReady(const std::string &name, bool ready)
         this->_readyPlayers.erase(name);
 }
 
-BattleRoyale::BattleRoyale(size_t defaultMaxPlayers):
-    _defaultMaxPlayers(defaultMaxPlayers)
-{}
-
-std::unique_ptr<BattleRoyale::Game> &BattleRoyale::join(const std::string &player)
+void BattleRoyale::update()
 {
-    // looks for an unstarted game with enough place
-    for (auto &[_, game] : this->_games) {
-        if (game->getStatus() == BattleRoyale::Game::Waiting && game->getPlayerNumber() == game->getMaxPlayerNumber()) {
-            game->addPlayer(player);
-            return (game);
-        }
-    }
-
-    // no game found: create a new one and join
-    std::unique_ptr<BattleRoyale::Game> &newGame = this->addGame();
-
-    newGame->addPlayer(player);
-    return (newGame);
-}
-
-std::unique_ptr<BattleRoyale::Game> &join(const std::string &player, std::unique_ptr<BattleRoyale::Game> &game)
-{
-    if (game)
-        game->addPlayer(player);
-    return (game);
-}
-
-std::unique_ptr<BattleRoyale::Game> &joinAsSpectator(const std::string &player, std::unique_ptr<BattleRoyale::Game> &game)
-{
-    if (game)
-        game->addSpectator(player);
-    return (game);
-}
-
-std::unique_ptr<BattleRoyale::Game> &BattleRoyale::addGame()
-{
-    // get unique game number
-    size_t number = 0;
-
-    while (this->_games.contains(identifier + std::to_string(number))) {}
-
-    // create and return a new game
-    auto it = this->_games.insert({identifier + std::to_string(number), std::make_unique<BattleRoyale::Game>(identifier + std::to_string(number), this->_defaultMaxPlayers)});
-
-    return ((*it.first).second);
-}
-
-std::unique_ptr<BattleRoyale::Game> &BattleRoyale::addGame(size_t maxPlayers)
-{
-    // get unique game number
-    size_t number = 0;
-
-    while (this->_games.contains(identifier + std::to_string(number))) {}
-
-    // create and return a new game
-    auto it = this->_games.insert({identifier + std::to_string(number), std::make_unique<BattleRoyale::Game>(identifier + std::to_string(number), maxPlayers)});
-
-    return ((*it.first).second);
-}
-
-void BattleRoyale::closeGame(const std::string &game)
-{
-    if (this->_games.contains(game) && this->_games.at(game)->getStatus() == BattleRoyale::Game::Closed) {
-        this->_games.erase(game);
-    }
-}
-
-void BattleRoyale::closeGames(void)
-{
-    for (auto &[name, game] : this->_games) {
-        this->closeGame(name);
-    }
-}
-
-void BattleRoyale::forceCloseGames(void)
-{
-    for (auto &[name, game] : this->_games) {
-        game->close();
-        this->_games.erase(name);
-    }
-}
-
-bool BattleRoyale::hasGame(const std::string &identifier)
-{
-    return (this->_games.contains(name));
-}
-
-std::unique_ptr<BattleRoyale::Game> &BattleRoyale::getGame(const std::string &identifier)
-{
-    return (this->_games.at(name));
-}
-
-std::unordered_map<std::string, std::unique_ptr<BattleRoyale::Game>> &BattleRoyale::getGames()
-{
-    return (this->_games);
-}
-
-void BattleRoyale::updateGames()
-{
-    for (auto &[identifier, game] : this->_games) {
-        switch (game->getStatus())
+        switch (this->_status)
         {
-        case BattleRoyale::Game::Waiting: // game waiting for players to be ready
-            game->begin();
+        case BattleRoyale::Waiting: // waiting for players to be ready
+            this->begin();
             break;
-        case BattleRoyale::Game::Beginning: // game starting unless a player is not ready anymore
-            game->start();
+        case BattleRoyale::Beginning: // starting unless a player is not ready anymore
+            this->start();
             break;
-        case BattleRoyale::Game::Running: // game running, waiting for the last player
-            game->finish();
+        case BattleRoyale::Running: // running, waiting for the last player
+            this->finish();
             break;
-        case BattleRoyale::Game::Finished: // last player standing, anouncing victory
-            game->close();
+        case BattleRoyale::Finished: // last player standing, anouncing victory
+            this->close();
             break;
-        case BattleRoyale::Game::Closed: // game closed, destroy it
-            this->_games.erase(identifier);
+        case BattleRoyale::Closed: // closed, restart the server
+            // TODO: restart the server
             break;
-        case BattleRoyale::Game::Interrupted: // game interrupted, destroy it
-            this->_games.erase(identifier);
+        case BattleRoyale::Interrupted: // game interrupted, stop the server
+            // TODO: stop the server
             break;
         }
-    }
 }

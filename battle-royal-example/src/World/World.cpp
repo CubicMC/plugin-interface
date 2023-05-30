@@ -5,13 +5,19 @@
 #include "world_storage/Persistence.hpp"
 #include <memory>
 
+#include "BattleRoyal.hpp"
+
 BattleRoyaleWorld::BattleRoyaleWorld(std::shared_ptr<WorldGroup> worldGroup, std::string folder):
     World(worldGroup, folder),
     persistence(folder)
 {
 }
 
-void BattleRoyaleWorld::tick() { World::tick(); }
+void BattleRoyaleWorld::tick()
+{
+    World::tick();
+    BattleRoyale::getInstance().updateGames();
+}
 
 void BattleRoyaleWorld::initialize()
 {
