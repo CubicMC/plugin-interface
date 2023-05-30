@@ -23,8 +23,8 @@ class Vector3;
 
 extern "C" {
     // TODO: Add more events
-    void initialize(PluginInterface *interface);
-    void destroy(PluginInterface *interface);
+    bool initialize(PluginInterface *interface);
+    bool destroy(PluginInterface *interface);
     bool onPlayerJoin(PluginInterface *interface, Player *player);
     bool onPlayerLeave(PluginInterface *interface, Player *player);
     bool onPlayerChat(PluginInterface *interface, Player *player, Chat *chat, std::string message);

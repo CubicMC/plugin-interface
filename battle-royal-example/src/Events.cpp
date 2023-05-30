@@ -1,6 +1,8 @@
 #include <iostream>
 #include <memory>
 
+#include "logging/logging.hpp"
+
 #include "BattleRoyal.hpp"
 #include "PluginInterface.hpp"
 #include "Plugin.hpp"
@@ -10,40 +12,108 @@
 
 #include "Commands.hpp"
 
-void initialize(PluginInterface *interface)
+bool initialize(PluginInterface *interface)
 {
-    Server::getInstance()->addCommand(std::make_unique<command_parser::Ready>());
-    Server::getInstance()->addCommand(std::make_unique<command_parser::NotReady>());
-    Server::getInstance()->addCommand(std::make_unique<command_parser::Interrupt>());
-    std::cout << "par nous meme hein" << std::endl;
-    std::cout << interface->server->isRunning() << std::endl;
+    interface->server->addCommand(std::make_unique<command_parser::Ready>());
+    interface->server->addCommand(std::make_unique<command_parser::NotReady>());
+    interface->server->addCommand(std::make_unique<command_parser::Interrupt>());
+
+    LINFO("Battle Royale initialized");
+    return (false);
 }
 
-void destroy(PluginInterface *interface)
+bool destroy(PluginInterface *interface)
 {
-    std::cout << "BattleRoyale - destroyed" << std::endl;
+    LINFO("Battle Royale destroyed");
+    return (false);
 }
 
 bool onPlayerJoin(PluginInterface *interface, Player *player)
 {
-    std::cout << "BattleRoyale - Player joined : " << std::endl;
-    return (true);
+    BattleRoyale::getInstance().join(player->getUsername());
+    return (false);
 }
 
 bool onPlayerLeave(PluginInterface *interface, Player *player)
 {
-    std::cout << "BattleRoyale - Player left : " << std::endl;
+    BattleRoyale::getInstance().playerLeft(player->getUsername());
+    return (true);
+}
+
+bool onEntityDamage(PluginInterface *interface, Entity *source, float amount)
+{
+    switch (BattleRoyale::getInstance().getStatus())
+    {
+    case BattleRoyale::Waiting:
+        return (true);
+        break;
+    case BattleRoyale::Beginning:
+        return (true);
+        break;
+    case BattleRoyale::Running:
+        return (false);
+        break;
+    case BattleRoyale::Finished:
+        return (true);
+        break;
+    case BattleRoyale::Closed:
+        return (true);
+        break;
+    case BattleRoyale::Interrupted:
+        return (true);
+        break;
+    }
     return (true);
 }
 
 bool onBlockPlace(PluginInterface *interface, uint32_t block_id, Vector3<int> *position)
 {
-    std::cout << "BattleRoyale - Block placed : " << *position << std::endl;
+    switch (BattleRoyale::getInstance().getStatus())
+    {
+    case BattleRoyale::Waiting:
+        return (true);
+        break;
+    case BattleRoyale::Beginning:
+        return (true);
+        break;
+    case BattleRoyale::Running:
+        return (false);
+        break;
+    case BattleRoyale::Finished:
+        return (false);
+        break;
+    case BattleRoyale::Closed:
+        return (false);
+        break;
+    case BattleRoyale::Interrupted:
+        return (true);
+        break;
+    }
     return (true);
 }
 
 bool onBlockDestroy(PluginInterface *interface, uint32_t block_id, Vector3<int> *position)
 {
-    std::cout << "BattleRoyale - Block destroyed : " << *position << std::endl;
+    switch (BattleRoyale::getInstance().getStatus())
+    {
+    case BattleRoyale::Waiting:
+        return (true);
+        break;
+    case BattleRoyale::Beginning:
+        return (true);
+        break;
+    case BattleRoyale::Running:
+        return (false);
+        break;
+    case BattleRoyale::Finished:
+        return (false);
+        break;
+    case BattleRoyale::Closed:
+        return (false);
+        break;
+    case BattleRoyale::Interrupted:
+        return (true);
+        break;
+    }
     return (true);
 }

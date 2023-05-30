@@ -27,7 +27,7 @@ void command_parser::Ready::execute(UNUSED std::vector<std::string> &args, Playe
 void command_parser::Ready::help(UNUSED std::vector<std::string> &args, Player *invoker) const
 {
     if (invoker) {
-        invoker->getDimension()->getWorld()->getChat()->sendSystemMessage("/notready", *invoker);
+        invoker->getDimension()->getWorld()->getChat()->sendSystemMessage("/ready", *invoker);
     } else
         LINFO("/ready");
 }

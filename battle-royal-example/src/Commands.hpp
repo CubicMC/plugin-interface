@@ -42,7 +42,6 @@ struct Interrupt : public CommandBase {
     void execute(std::vector<std::string> &args, Player *invoker) const override;
     void help(std::vector<std::string> &args, Player *invoker) const override;
 };
-
 }
 
 #endif // CUBICSERVER_COMMANDPARSER_COMMANDS_STOP_HPP
