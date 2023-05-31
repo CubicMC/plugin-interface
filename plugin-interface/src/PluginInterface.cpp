@@ -17,7 +17,7 @@ void PluginInterface::load(Server *server) {
 }
 
 bool PluginInterface::player::isConnected(Player *player) const {
-    return !player->getClient()->isDisconnected();
+    return false;
 }
 
 // TODO : Banned players
