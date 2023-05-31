@@ -1,4 +1,4 @@
-include_directories(${CMAKE_PROJECT_NAME} ${CMAKE_SOURCE_DIR}/cubic-server)
-include_directories(${CMAKE_PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src)
+include_directories(plugin-interface ../cubic-server)
+include_directories(plugin-interface src)
 
-add_library(${CMAKE_PROJECT_NAME} SHARED ${CMAKE_CURRENT_LIST_DIR}/src/PluginInterface.cpp)
+add_library(plugin-interface SHARED src/PluginInterface.cpp)
