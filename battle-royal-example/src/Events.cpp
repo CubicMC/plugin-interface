@@ -67,8 +67,10 @@ bool onEntityDamage(PluginInterface *interface, Entity *source, float amount)
         return (true);
         break;
     case BattleRoyale::Running:
-        if (player->getHealth() - amount <= 0)
+        if (player->getHealth() - amount <= 0) {
             BattleRoyale::getInstance().playerDied(*player);
+            return (true);
+        }
         return (false);
         break;
     case BattleRoyale::Finished:

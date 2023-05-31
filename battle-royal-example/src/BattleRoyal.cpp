@@ -54,6 +54,18 @@ void BattleRoyale::join(Player &player)
         this->_players[player.getUsername()] = std::make_unique<BattleRoyale::Challenger>(player);
 
         player.setGamemode(player_attributes::Gamemode::Adventure);
+        player.sendPlayerAbilities({0, 0.05, 0.1});
+        player.updatePlayerInfo({
+            .actions = (uint8_t) protocol::PlayerInfoUpdate::Actions::UpdateGamemode,
+            .actionSets = {
+                {
+                    .uuid = player.getUuid(),
+                    .updateGamemode = {
+                        .gamemode = (int32_t) player.getGamemode(),
+                    }
+                }
+            }
+        });
     } else
         this->spectate(player);
 }
@@ -62,6 +74,22 @@ void BattleRoyale::spectate(Player &player)
 {
     this->_spectators[player.getUsername()] = &player;
     player.setGamemode(player_attributes::Gamemode::Spectator);
+    player.sendPlayerAbilities(
+        {(uint8_t) protocol::PlayerAbilitiesClient::Flags::Invulnerable | (uint8_t) protocol::PlayerAbilitiesClient::Flags::Flying |
+             (uint8_t) protocol::PlayerAbilitiesClient::Flags::AllowFlying,
+         1.0, 0.1}
+    );
+    player.updatePlayerInfo({
+        .actions = (uint8_t) protocol::PlayerInfoUpdate::Actions::UpdateGamemode,
+        .actionSets = {
+            {
+                .uuid = player.getUuid(),
+                .updateGamemode = {
+                    .gamemode = (int32_t) player.getGamemode(),
+                }
+            }
+        }
+    });
 }
 
 void BattleRoyale::playerLeft(Player &player)
@@ -108,8 +136,24 @@ void BattleRoyale::playerDied(Player &player)
         if (this->_players.contains(player.getUsername())) {
             this->_players[player.getUsername()]->alive = false;
             player.setGamemode(player_attributes::Gamemode::Spectator);
+            player.sendPlayerAbilities(
+                {(uint8_t) protocol::PlayerAbilitiesClient::Flags::Invulnerable | (uint8_t) protocol::PlayerAbilitiesClient::Flags::Flying |
+                     (uint8_t) protocol::PlayerAbilitiesClient::Flags::AllowFlying,
+                 1.0, 0.1}
+            );
+            player.updatePlayerInfo({
+                .actions = (uint8_t) protocol::PlayerInfoUpdate::Actions::UpdateGamemode,
+                .actionSets = {
+                    {
+                        .uuid = player.getUuid(),
+                        .updateGamemode = {
+                            .gamemode = (int32_t) player.getGamemode(),
+                        }
+                    }
+                }
+            });
             this->_group->getChat()->sendSystemMessage(player.getUsername() + " has died!", *this->_group);
-//            this->finish();
+            //            this->finish();
         }
         break;
     default:
@@ -168,6 +212,18 @@ void BattleRoyale::start()
         for (const auto &[_, player] : this->_players) {
             player->alive = true;
             player->player.setGamemode(player_attributes::Gamemode::Adventure);
+            player->player.sendPlayerAbilities({0, 0.05, 0.1});
+            player->player.updatePlayerInfo({
+                .actions = (uint8_t) protocol::PlayerInfoUpdate::Actions::UpdateGamemode,
+                .actionSets = {
+                    {
+                        .uuid = player->player.getUuid(),
+                        .updateGamemode = {
+                            .gamemode = (int32_t) player->player.getGamemode(),
+                        }
+                    }
+                }
+            });
             this->_group->getChat()->sendSystemMessage("Kill everyone to win. Good Luck.", player->player);
             // TODO: clear inventory and teleport players and spectators
         }
@@ -216,6 +272,18 @@ void BattleRoyale::reset()
     for (auto &[_, player] : this->_players) {
         player->ready = false;
         player->player.setGamemode(player_attributes::Gamemode::Adventure);
+        player->player.sendPlayerAbilities({0, 0.05, 0.1});
+        player->player.updatePlayerInfo({
+            .actions = (uint8_t) protocol::PlayerInfoUpdate::Actions::UpdateGamemode,
+            .actionSets = {
+                {
+                    .uuid = player->player.getUuid(),
+                    .updateGamemode = {
+                        .gamemode = (int32_t) player->player.getGamemode(),
+                    }
+                }
+            }
+        });
         player->player.setHealth(20);
         player->player.sendHealth();
 
@@ -245,9 +313,9 @@ void BattleRoyale::setReady(Player &player, bool ready)
 {
     if (this->_players.contains(player.getUsername())) {
         this->_players[player.getUsername()]->ready = ready;
-//        if (this->_status == BattleRoyale::Waiting && ready == true) {
-//            this->begin();
-//        }
+        if (this->_status == BattleRoyale::Waiting && ready == true) {
+            this->begin();
+        }
     }
 }
 
@@ -256,7 +324,6 @@ void BattleRoyale::update()
     switch (this->_status)
     {
     case BattleRoyale::Waiting: // waiting for players to be ready
-        this->begin();
         break;
     case BattleRoyale::Beginning: // starting unless a player is not ready anymore
         this->start();
