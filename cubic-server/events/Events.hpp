@@ -2,6 +2,7 @@
 #define CUBICSERVER_PLUGINMANAGER_EVENTS_HPP
 
 #include <string>
+#include <cstdint>
 
 class PluginInterface;
 class Entity;
@@ -21,6 +22,7 @@ class Vector3;
 namespace EventType {
     typedef bool (*initialize)(PluginInterface *interface);
     typedef bool (*destroy)(PluginInterface *interface);
+    typedef bool (*tick)(PluginInterface *interface);
     typedef bool (*onPlayerJoin)(PluginInterface *interface, Player *player);
     typedef bool (*onPlayerLeave)(PluginInterface *interface, Player *player);
     typedef bool (*onPlayerChat)(PluginInterface *interface, Player *player, Chat *chat, std::string message); // TODO - Place event
