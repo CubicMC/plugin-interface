@@ -28,6 +28,7 @@ extern "C" {
     // TODO: Add more events
     bool initialize(PluginInterface *interface);
     bool destroy(PluginInterface *interface);
+    bool tick(PluginInterface *interface);
     bool onPlayerJoin(PluginInterface *interface, Player *player);
     bool onPlayerLeave(PluginInterface *interface, Player *player);
     bool onPlayerChat(PluginInterface *interface, Player *player, Chat *chat, std::string message);

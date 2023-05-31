@@ -1,3 +1,4 @@
+#include <ctime>
 #include <unordered_map>
 #include <memory>
 
@@ -5,6 +6,7 @@
 #include "PluginInterface.hpp"
 #include "Plugin.hpp"
 #include "Player.hpp"
+#include "LivingEntity.hpp"
 #include "WorldGroup.hpp"
 #include "PlayerAttributes.hpp"
 #include "logging/logging.hpp"
@@ -39,6 +41,11 @@ WorldGroup *BattleRoyale::getWorldGroup(void) noexcept
 bool BattleRoyale::isPlaying(const std::string &name) const noexcept
 {
     return (this->_players.contains(name));
+}
+
+bool BattleRoyale::isSpectating(const std::string &name) const noexcept
+{
+    return (this->_spectators.contains(name));
 }
 
 void BattleRoyale::join(Player &player)
@@ -78,12 +85,13 @@ void BattleRoyale::playerLeft(Player &player)
         if (this->_players.contains(player.getUsername())) {
             this->_players.erase(player.getUsername());
             this->_group->getChat()->sendSystemMessage(player.getUsername() + " is eliminated!", *this->_group);
+//            this->finish();
         }
         break;
     default:
         break;
     }
-    // leaving in the Finished, Closed or Interrupted (unlikely) phase does not have any impact
+    // leaving in the Finished, Closed phase does not have any impact
 }
 
 void BattleRoyale::playerDied(Player &player)
@@ -101,12 +109,13 @@ void BattleRoyale::playerDied(Player &player)
             this->_players[player.getUsername()]->alive = false;
             player.setGamemode(player_attributes::Gamemode::Spectator);
             this->_group->getChat()->sendSystemMessage(player.getUsername() + " has died!", *this->_group);
+//            this->finish();
         }
         break;
     default:
         break;
     }
-    // dying in the Finished, Closed or Interrupted phase should not be possible and does not have any impact
+    // dying in the Finished, Closed phase should not be possible and does not have any impact
 }
 
 int BattleRoyale::getAlivePlayerNumber(void)
@@ -123,12 +132,18 @@ int BattleRoyale::getAlivePlayerNumber(void)
 void BattleRoyale::begin()
 {
     // if more than 1 player and all players are ready, go to the beginning phase
-    for (const auto &[_, player] : this->_players) {
-        if (player->ready == false)
+    if (this->_players.size() < 2)
+        return;
+    for (const auto &[name, player] : this->_players) {
+        if (player->ready == false) {
+            LINFO("{} is not ready.", name);
             return;
+        }
     }
     this->_status = BattleRoyale::Beginning;
     this->_timestamp = std::time(nullptr);
+    this->_group->getChat()->sendSystemMessage("Battle Royale starts in 5 seconds...", *this->_group);
+    LINFO("Players are ready, begining...");
 }
 
 void BattleRoyale::start()
@@ -137,36 +152,51 @@ void BattleRoyale::start()
     for (const auto &[_, player] : this->_players) {
         if (player->ready == false) {
             this->_status = BattleRoyale::Waiting;
+            this->_group->getChat()->sendSystemMessage("Someone is not ready!", *this->_group);
+            LINFO("Beginning sequence stopped, waiting for players.");
             return;
         }
+    }
+    // if not enough players
+    if (this->_players.size() < 2) {
+        this->_group->getChat()->sendSystemMessage("Not enough players!", *this->_group);
+        LINFO("Beginning sequence stopped, waiting for players.");
+        return;
     }
     // if all players are ready and no player quit/join in for 5 seconds, go to the running phase
     if (std::time(nullptr) >= this->_timestamp + 5) {
         for (const auto &[_, player] : this->_players) {
             player->alive = true;
             player->player.setGamemode(player_attributes::Gamemode::Adventure);
-            player->player.getWorldGroup()->getChat()->sendSystemMessage("Kill everyone to win. Good Luck.", player->player);
+            this->_group->getChat()->sendSystemMessage("Kill everyone to win. Good Luck.", player->player);
             // TODO: clear inventory and teleport players and spectators
         }
         this->_status = BattleRoyale::Running;
         this->_timestamp = std::time(nullptr);
+        LINFO("Battle Royale start!");
     }
 }
 
 void BattleRoyale::finish()
 {
     // one player remaining, go to the finishing phase
-    if (this->_players.size() == 1) {
-        this->_players[0]->player.getWorldGroup()->getChat()->sendSystemMessage(this->_players[0]->player.getUsername() + " won the match!", *this->_group);
-        this->_status = BattleRoyale::Finished;
-        this->_timestamp = std::time(nullptr);
-        return;
+    if (this->getAlivePlayerNumber() == 1) {
+        for (const auto &[name, player] : this->_players) {
+            if (player->alive == true) {
+                this->_group->getChat()->sendSystemMessage(name + " won the match!", *this->_group);
+                this->_status = BattleRoyale::Finished;
+                this->_timestamp = std::time(nullptr);
+                LINFO("Battle Royale ended, {} wins.", name); 
+                return;
+            }
+        }
     }
     // no player remaining (very rare), no winner, go to the finishing phase
-    if (this->_players.size() == 0) {
-        // TODO: notify players
+    if (this->getAlivePlayerNumber() == 0) {
+        this->_group->getChat()->sendSystemMessage("Everyone is dead! No winner this time, too bad.", *this->_group);
         this->_status = BattleRoyale::Finished;
         this->_timestamp = std::time(nullptr);
+        LINFO("Battle Royale ended with no winner.");
         return;
     }
 }
@@ -176,6 +206,7 @@ void BattleRoyale::close()
     // 8 seconds after the game is over
     if (std::time(nullptr) > this->_timestamp + 8) {
         this->_status = BattleRoyale::Closed;
+        LINFO("Game closed. Restarting");
         return;
     }
 }
@@ -185,17 +216,24 @@ void BattleRoyale::reset()
     for (auto &[_, player] : this->_players) {
         player->ready = false;
         player->player.setGamemode(player_attributes::Gamemode::Adventure);
+        player->player.setHealth(20);
+        player->player.sendHealth();
+
     }
     for (auto &[name, spectator] : this->_spectators) {
         this->join(*spectator);
         this->_spectators.erase(name);
+        spectator->setHealth(20);
+        spectator->sendHealth();
     }
+    this->_timestamp = std::time(nullptr);
     this->_status = BattleRoyale::Waiting;
 }
 
 void BattleRoyale::interrupt() noexcept
 {
-    this->_status = BattleRoyale::Interrupted;
+    this->reset();
+    LINFO("Battle Royale interrupted!");
 }
 
 BattleRoyale::Status BattleRoyale::getStatus() const noexcept
@@ -207,6 +245,9 @@ void BattleRoyale::setReady(Player &player, bool ready)
 {
     if (this->_players.contains(player.getUsername())) {
         this->_players[player.getUsername()]->ready = ready;
+//        if (this->_status == BattleRoyale::Waiting && ready == true) {
+//            this->begin();
+//        }
     }
 }
 
@@ -227,10 +268,7 @@ void BattleRoyale::update()
         this->close();
         break;
     case BattleRoyale::Closed: // closed, restart the server
-        // TODO: restart the server
-        break;
-    case BattleRoyale::Interrupted: // game interrupted, stop the server
-        // TODO: stop the server
+        this->reset();
         break;
     }
 }

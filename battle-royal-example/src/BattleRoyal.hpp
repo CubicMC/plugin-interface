@@ -21,8 +21,7 @@ public:
         Beginning = 2,
         Running = 3,
         Finished = 4,
-        Closed = 0,
-        Interrupted = -1
+        Closed = 0
     };
 
     struct Challenger {

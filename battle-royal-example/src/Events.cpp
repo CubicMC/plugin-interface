@@ -33,6 +33,12 @@ bool destroy(PluginInterface *interface)
     return (false);
 }
 
+bool tick(PluginInterface *interface)
+{
+    BattleRoyale::getInstance().update();
+    return (false);
+}
+
 bool onPlayerJoin(PluginInterface *interface, Player *player)
 {
     BattleRoyale::getInstance().join(*player);
@@ -71,9 +77,6 @@ bool onEntityDamage(PluginInterface *interface, Entity *source, float amount)
     case BattleRoyale::Closed:
         return (true);
         break;
-    case BattleRoyale::Interrupted:
-        return (true);
-        break;
     }
     return (true);
 }
@@ -97,9 +100,6 @@ bool onBlockPlace(PluginInterface *interface, uint32_t block_id, Vector3<int> *p
     case BattleRoyale::Closed:
         return (false);
         break;
-    case BattleRoyale::Interrupted:
-        return (true);
-        break;
     }
     return (true);
 }
@@ -122,9 +122,6 @@ bool onBlockDestroy(PluginInterface *interface, uint32_t block_id, Vector3<int> 
         break;
     case BattleRoyale::Closed:
         return (false);
-        break;
-    case BattleRoyale::Interrupted:
-        return (true);
         break;
     }
     return (true);
