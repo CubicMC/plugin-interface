@@ -9,14 +9,19 @@
 
 #include "Server.hpp"
 #include "Player.hpp"
+#include "LivingEntity.hpp"
 
 #include "Commands.hpp"
 
 bool initialize(PluginInterface *interface)
 {
+    BattleRoyale::getInstance().setWorldGroup(interface->server->getWorldGroup("default").get());
+
     interface->server->addCommand(std::make_unique<command_parser::Ready>());
     interface->server->addCommand(std::make_unique<command_parser::NotReady>());
     interface->server->addCommand(std::make_unique<command_parser::Interrupt>());
+
+//    BattleRoyale::getInstance().getWorldGroup()->getScoreboardSystem().addObjective();
 
     LINFO("Battle Royale initialized");
     return (false);
@@ -42,6 +47,11 @@ bool onPlayerLeave(PluginInterface *interface, Player *player)
 
 bool onEntityDamage(PluginInterface *interface, Entity *source, float amount)
 {
+    Player *player = dynamic_cast<Player *>(source);
+
+    if (!player)
+        return (false);
+
     switch (BattleRoyale::getInstance().getStatus())
     {
     case BattleRoyale::Waiting:
@@ -51,6 +61,8 @@ bool onEntityDamage(PluginInterface *interface, Entity *source, float amount)
         return (true);
         break;
     case BattleRoyale::Running:
+        if (player->getHealth() - amount <= 0)
+            BattleRoyale::getInstance().playerDied(*player);
         return (false);
         break;
     case BattleRoyale::Finished:

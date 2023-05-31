@@ -3,11 +3,12 @@
 
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
+#include <list>
 #include <string>
 #include <ctime>
 
 class Player;
+class WorldGroup;
 
 static const char identifier[] = "battleroyale";
 static const char version[] = "1.0.0";
@@ -30,15 +31,19 @@ public:
 
         Player &player;
         bool ready;
+        bool alive;
 
         Challenger &operator=(const Challenger &other);
     };
 
 public:
-    BattleRoyale() = default;
+    BattleRoyale();
     ~BattleRoyale() = default;
 
     static BattleRoyale &getInstance();
+
+    void setWorldGroup(WorldGroup *worldGroup) noexcept;
+    WorldGroup *getWorldGroup(void) noexcept;
 
     bool isPlaying(const std::string &name) const noexcept;
     bool isSpectating(const std::string &name) const noexcept;
@@ -49,10 +54,13 @@ public:
     void playerLeft(Player &player);
     void playerDied(Player &player);
 
+    int getAlivePlayerNumber(void);
+
     void begin();
     void start();
     void finish();
     void close();
+    void reset();
 
     void interrupt() noexcept;
 
@@ -63,8 +71,9 @@ public:
     void update();
 
 private:
+    WorldGroup *_group;
     std::unordered_map<std::string, std::unique_ptr<Challenger>> _players;
-    std::unordered_set<std::string> _readyPlayers;
+    std::unordered_map<std::string, Player *> _spectators;
     Status _status;
     std::time_t _timestamp;
 };

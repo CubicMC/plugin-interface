@@ -11,7 +11,12 @@
 
 BattleRoyale::Challenger::Challenger(Player &player):
     player(player),
-    ready(false)
+    ready(false),
+    alive(true)
+{}
+
+BattleRoyale::BattleRoyale():
+    _status(BattleRoyale::Waiting)
 {}
 
 BattleRoyale &BattleRoyale::getInstance()
@@ -21,14 +26,19 @@ BattleRoyale &BattleRoyale::getInstance()
     return instance;
 }
 
+void BattleRoyale::setWorldGroup(WorldGroup *worldGroup) noexcept
+{
+    this->_group = worldGroup;
+}
+
+WorldGroup *BattleRoyale::getWorldGroup(void) noexcept
+{
+    return (this->_group);
+}
+
 bool BattleRoyale::isPlaying(const std::string &name) const noexcept
 {
     return (this->_players.contains(name));
-}
-
-bool BattleRoyale::isSpectating(const std::string &name) const noexcept
-{
-    return (!this->isPlaying(name));
 }
 
 void BattleRoyale::join(Player &player)
@@ -36,18 +46,23 @@ void BattleRoyale::join(Player &player)
     if (this->_status == BattleRoyale::Waiting || this->_status == BattleRoyale::Beginning) {
         this->_players[player.getUsername()] = std::make_unique<BattleRoyale::Challenger>(player);
 
-        player.setGamemode(player_attributes::Gamemode::Survival);
+        player.setGamemode(player_attributes::Gamemode::Adventure);
     } else
         this->spectate(player);
 }
 
 void BattleRoyale::spectate(Player &player)
 {
+    this->_spectators[player.getUsername()] = &player;
     player.setGamemode(player_attributes::Gamemode::Spectator);
 }
 
 void BattleRoyale::playerLeft(Player &player)
 {
+    if (isSpectating(player.getUsername())) {
+        this->_spectators.erase(player.getUsername());
+        return;
+    }
     switch (this->_status)
     {
     case BattleRoyale::Waiting: // remove player from everything
@@ -62,7 +77,7 @@ void BattleRoyale::playerLeft(Player &player)
     case BattleRoyale::Running: // counts as a forfeit
         if (this->_players.contains(player.getUsername())) {
             this->_players.erase(player.getUsername());
-            // TODO: notify player (forfeit)
+            this->_group->getChat()->sendSystemMessage(player.getUsername() + " is eliminated!", *this->_group);
         }
         break;
     default:
@@ -83,15 +98,26 @@ void BattleRoyale::playerDied(Player &player)
         break;
     case BattleRoyale::Running: // if running, counts as a forfeit
         if (this->_players.contains(player.getUsername())) {
-            this->_players.erase(player.getUsername());
+            this->_players[player.getUsername()]->alive = false;
             player.setGamemode(player_attributes::Gamemode::Spectator);
-            // TODO: notify player (forfeit)
+            this->_group->getChat()->sendSystemMessage(player.getUsername() + " has died!", *this->_group);
         }
         break;
     default:
         break;
     }
     // dying in the Finished, Closed or Interrupted phase should not be possible and does not have any impact
+}
+
+int BattleRoyale::getAlivePlayerNumber(void)
+{
+    int count = 0;
+
+    for (const auto &[_, player] : this->_players) {
+        if (player->alive)
+            count++;
+    }
+    return (count);
 }
 
 void BattleRoyale::begin()
@@ -117,7 +143,8 @@ void BattleRoyale::start()
     // if all players are ready and no player quit/join in for 5 seconds, go to the running phase
     if (std::time(nullptr) >= this->_timestamp + 5) {
         for (const auto &[_, player] : this->_players) {
-            player->player.setGamemode(player_attributes::Gamemode::Survival);
+            player->alive = true;
+            player->player.setGamemode(player_attributes::Gamemode::Adventure);
             player->player.getWorldGroup()->getChat()->sendSystemMessage("Kill everyone to win. Good Luck.", player->player);
             // TODO: clear inventory and teleport players and spectators
         }
@@ -130,7 +157,7 @@ void BattleRoyale::finish()
 {
     // one player remaining, go to the finishing phase
     if (this->_players.size() == 1) {
-        this->_players[0]->player.getWorldGroup()->getChat()->sendSystemMessage(this->_players[0]->player.getUsername() + " won the match!", *this->_players[0]->player.getWorldGroup());
+        this->_players[0]->player.getWorldGroup()->getChat()->sendSystemMessage(this->_players[0]->player.getUsername() + " won the match!", *this->_group);
         this->_status = BattleRoyale::Finished;
         this->_timestamp = std::time(nullptr);
         return;
@@ -151,6 +178,19 @@ void BattleRoyale::close()
         this->_status = BattleRoyale::Closed;
         return;
     }
+}
+
+void BattleRoyale::reset()
+{
+    for (auto &[_, player] : this->_players) {
+        player->ready = false;
+        player->player.setGamemode(player_attributes::Gamemode::Adventure);
+    }
+    for (auto &[name, spectator] : this->_spectators) {
+        this->join(*spectator);
+        this->_spectators.erase(name);
+    }
+    this->_status = BattleRoyale::Waiting;
 }
 
 void BattleRoyale::interrupt() noexcept
