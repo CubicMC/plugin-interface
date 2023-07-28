@@ -1,3 +1,0 @@
-[submodule "cubic-server"]
-	path = cubic-server
-	url = git@github.com:CubicMC/cubic-server.git

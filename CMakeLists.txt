@@ -1,35 +1,43 @@
-cmake_minimum_required(VERSION 3.20.0)
+cmake_minimum_required(VERSION 3.14.0)
 
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.24.0)
-    cmake_policy(SET CMP0135 OLD)
-endif()
+set(PLUGIN_INTERFACE_PROJECT_NAME plugin-interface)
 
-option(USE_CLANG "Build application with clang" OFF)
+project(${PLUGIN_INTERFACE_PROJECT_NAME} VERSION 0.1.1 LANGUAGES CXX)
 
-if (USE_CLANG)
-    set(CMAKE_CXX_COMPILER /usr/bin/clang++)
-    set(CMAKE_C_COMPILER /usr/bin/clang)
-endif()
-
-project(PluginInterface VERSION 0.1.0 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
 
 include(FetchContent)
 
 FetchContent_Declare(
-    cubic-server
-    GIT_REPOSITORY https://github.com/CubicMC/cubic-server.git
-    GIT_PROGRESS TRUE
-    GIT_SHALLOW TRUE
-    GIT_TAG v0.2.0-beta
+    json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.11.2
+)
+
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.11.0
+)
+
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+    GIT_TAG v2.9
 )
 
 FetchContent_MakeAvailable(
-    cubic-server
+    json
+    argparse
+    spdlog
 )
 
-include_directories(${CMAKE_PROJECT_NAME} cubic-server)
-include_directories(${CMAKE_PROJECT_NAME} plugin-interface)
-
-add_library(${CMAKE_PROJECT_NAME} SHARED)
-
 add_subdirectory(plugin-interface)
+
+target_link_libraries (plugin-interface PRIVATE
+    nlohmann_json::nlohmann_json
+    argparse
+    spdlog::spdlog
+)
+
+install(TARGETS ${PLUGIN_INTERFACE_TARGET_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
