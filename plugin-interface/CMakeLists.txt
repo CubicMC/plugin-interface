@@ -1,4 +1,1 @@
-include_directories(plugin-interface ../cubic-server)
-include_directories(plugin-interface src)
-
-add_library(plugin-interface SHARED src/PluginInterface.cpp)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE PluginInterface.cpp)
